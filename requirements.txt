@@ -1,0 +1,6 @@
+  
+lxml
+selenium
+requests
+wxPython
+XlsxWriter
