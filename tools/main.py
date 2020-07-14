@@ -1,9 +1,5 @@
 import json
 import os
-import re
-import threading
-import traceback
-
 import wx
 import time
 from selenium import webdriver
@@ -25,15 +21,23 @@ except OSError:
 
 from fangtianxia.fav_info import Ftx_fav
 from fangtianxia.main import Ftx
+from city58.main import Spider_58
 
-class Spider_all:
-    def __init__(self,most_list):
-        self.most_list=most_list
+class Spider_all(object):
+    def crawl_all(self,most_dict):
+        a=Ftx()
+        ftx=a.get_house_info(most_dict)
 
-    def crawl_all(self):
-        a=Ftx(self.most_list)
-        ftx=a.get_house_info()
-        all_info=ftx
+        try:
+            b=Spider_58()
+            c58=b.get_house_info(most_dict)
+        except:
+            c58=[]
+            print('58同城需要验证，或ip被封')
+
+        all_info=[]
+        all_info.extend(ftx)
+        all_info.extend(c58)
         return all_info
 
     def gen_html(self,info:list):
@@ -108,10 +112,9 @@ class FangtianxiaButton(Button):
                     # 分析数据，找出最符合使用者的租房条件
                     most_dict=a.gen_most_dict(fav_info)
                     print(most_dict)
-
                     #根据租房条件抓取各大租房网站的房源信息
-                    b=Spider_all(most_dict)
-                    info=b.crawl_all()
+                    b=Spider_all()
+                    info=b.crawl_all(most_dict)
                     #生成HTML页面
                     b.gen_html(info)
                     # b.save_json(info)

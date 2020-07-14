@@ -1,6 +1,6 @@
-  
 lxml
 selenium
 requests
 wxPython
 XlsxWriter
+fontTools

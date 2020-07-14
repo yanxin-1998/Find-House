@@ -26,24 +26,24 @@ class Ftx_fav(object):
         divs=page.xpath('//div[@class="collect_info"]')
 
         for index,div in enumerate(divs):
-            info_dict={}
             try:
+                info_dict={}
                 p_text = div.xpath('.//p/text()')
-                p1_text= p_text[0].split('\xa0\xa0')
-                p2_text= p_text[1].split('\xa0\xa0')
+                p1_text = p_text[0].split('\xa0\xa0')
+                p2_text = p_text[1].split('\xa0\xa0')
 
                 info_dict['title'] = div.xpath('./b/a/text()')[0]  # 标题
                 info_dict['price'] = prices[index]  # 租金
-                info_dict['type']=p1_text[0]        #户型
-                info_dict['area']=p1_text[1][:-2] + '平米'  #面积
-                info_dict['model']=p1_text[2]       #出租方式
-                info_dict['direction']=p1_text[3]   #朝向
-                info_dict['district']=p2_text[0]    #区域
+                info_dict['type'] = p1_text[0]  # 户型
+                info_dict['area'] = p1_text[1][:-2] + '平米'  # 面积
+                info_dict['model'] = p1_text[2]  # 出租方式
+                info_dict['direction'] = p1_text[3]  # 朝向
+                info_dict['district'] = p2_text[0]  # 区域
                 info_dict['url'] = div.xpath('./b/a/@href')[0]  # 链接
-
                 all_info_list.append(info_dict)
             except:
-                print('此收藏房源已被移除')
+                print('该收藏房源没有朝向信息或已被删除')
+
         return all_info_list
 
     def gen_most_dict(self,info_list):  #找出最有可能的条件
@@ -58,7 +58,7 @@ class Ftx_fav(object):
         for info in info_list:
             prices.append(int(info['price'][:-3]))
             types.append(info['type'])
-            areas.append(int(info['area'][:-4]))
+            areas.append(float(info['area'][:-2]))
             models.append(info['model'])
             directions.append(info['direction'])
             districts.append(info['district'])
@@ -111,5 +111,5 @@ if __name__ == '__main__':
     a=Ftx_fav(cookies)
     b=a.get_fav_info()
     print(b)
-    # print(a.gen_most_dict(b))
+    print(a.gen_most_dict(b))
     # a.save_fav_info(b,'D:/untitled1/爬虫/Find-house/data')
