@@ -12,9 +12,9 @@ class Spider_58(object):
         most_dict2=most_dict.copy()  #建立副本储存变更后的条件
         if most_dict2['model'][:2] == '整租':   #由于整租和合租网页结构不同，所以分开
             # 'https: // zz.58.com / zufang /'
-            url=most_dict2['begin_url'].split('.')[0]+'.58.com/zufang/'
+            url=most_dict2['begin_url']+'.58.com/zufang/'
         else:
-            url = most_dict2['begin_url'].split('.')[0]+'.58.com/hezu/'
+            url = most_dict2['begin_url']+'.58.com/hezu/'
         res = self.session.get(url)
         page=etree.HTML(res.text)
 
@@ -24,7 +24,7 @@ class Spider_58(object):
         districts = page.xpath('//dl[@class="secitem secitem_fist"]/dd/a/text()')[1:]  # 关键词名字
         paths = page.xpath('//dl[@class="secitem secitem_fist"]/dd/a/@href')[1:]  # 关键词路径
         for index, district in enumerate(districts):
-            #有的地区后面带区字，有的不带，烦死了，干脆都做一份
+            #不同网站有的地区后面带区字，有的不带，烦死了，干脆都做一份
             kw_path_dict[district] = paths[index].split('/')[3]
             kw_path_dict[district[:-1]] = paths[index].split('/')[3]
             kw_path_dict[district+'区'] = paths[index].split('/')[3]
@@ -81,7 +81,7 @@ class Spider_58(object):
         else:
             url='https://zz.58.com/{}/hezu/{}{}{}/'\
                 .format(kw_path_dict[most_dict2['district']],kw_path_dict[most_dict2['price']],kw_path_dict[most_dict2['type']],kw_path_dict[most_dict2['direction']])
-        print(url)
+        # print(url)
         res=self.session.get(url)
         page = etree.HTML(res.text)
 
@@ -131,6 +131,6 @@ class Spider_58(object):
 
 if __name__ == '__main__':
     most_dict = {'price': '1516元/月', 'type': '1室1厅', 'district': '经开', 'model': '整租', 'area': '48平米',
-                 'direction': '南向', 'begin_url': 'https://zz.zu.fang.com'}
+                 'direction': '南向', 'begin_url': 'https://zz'}
     a = Spider_58()
     print(a.get_house_info(most_dict))

@@ -2,10 +2,10 @@ import json
 import os
 import wx
 import time
+import sys
 from selenium import webdriver
 from selenium.webdriver import ChromeOptions
-
-import sys
+from lxml import etree
 
 MAIN_FILE_PATH = os.path.dirname(os.path.abspath(__file__))
 print(MAIN_FILE_PATH)
@@ -21,6 +21,7 @@ except OSError:
 
 from fangtianxia.fav_info import Ftx_fav
 from fangtianxia.main import Ftx
+from city58.fav_info import C58_fav
 from city58.main import Spider_58
 
 class Spider_all(object):
@@ -80,7 +81,7 @@ class Button:
             frame.SetStatusText("爬取中...", 1)
         elif status == 1:
             self.driver.quit()
-            frame.SetStatusText("你的收藏中没有租房信息，终止爬取", 1)
+            frame.SetStatusText("您的收藏中没有租房信息，终止爬取", 1)
         elif status == 2:
             frame.SetStatusText("爬取成功", 1)
         else:
@@ -127,6 +128,45 @@ class FangtianxiaButton(Button):
         except Exception:
             self.updateStatus(self.frame,3)
 
+class City58Button(Button):
+    def OnClick(self, event):
+        try:
+            self.updateStatus(self.frame,0)
+            url='http://my.58.com/pro/shoucangjianli'
+            self.Automation(url)
+            while 1:
+                time.sleep(0.2)
+                if self.driver.current_url.startswith('http://my.58.com/pro/shoucangjianli?pts'):
+                    self.driver.switch_to.frame("ContainerFrame")
+                    page = etree.HTML(self.driver.page_source)
+                    url_ls = page.xpath('//tbody/tr/td[not(@class)]/a/@href')
+                    self.driver.quit()
+                    break
+            try:
+                # 判断使用者的收藏中是否有租房信息
+                if len(url_ls)>0:
+                    # 抓取使用者58同城网站收藏的租房信息
+                    a = C58_fav()
+                    fav_info = a.get_fav_info(url_ls)
+                    # a.save_fav_info(fav_info,os.path.join(BASE_PATH,'./Spiders/city58'))
+                    # 分析数据，找出最符合使用者的租房条件
+                    most_dict=a.gen_most_dict(fav_info)
+                    print(most_dict)
+                    #根据租房条件抓取各大租房网站的房源信息
+                    b=Spider_all()
+                    info=b.crawl_all(most_dict)
+                    #生成HTML页面
+                    b.gen_html(info)
+                    # b.save_json(info)
+                    self.Automation(os.path.join(DATA_DIR, './Housing-Resource.html'))
+                    self.updateStatus(self.frame, 2)
+                else:
+                    self.updateStatus(self.frame, 1)
+            except Exception:
+                self.updateStatus(self.frame,3)
+        except Exception:
+            self.updateStatus(self.frame,3)
+
 class Item:
     x = 0
     y = 0
@@ -154,13 +194,16 @@ class CreateFrame(wx.Frame):
         # create buttons
         start_x = 50
         start_y = 25
-        xstep = 200
+        xstep = 150
         ystep = 150
         FangtianxiaButton(self, self.pnl, Item(start_x, start_y, '房天下',
             'resource/icon/ftx.png'))
 
+        City58Button(self, self.pnl, Item(start_x+xstep, start_y, '58同城',
+                                               'resource/icon/c58.png'))
+
 if __name__ == '__main__':
     app = wx.App()
-    frm = CreateFrame(None, title='Find-House', size=(400, 600))
+    frm = CreateFrame(None, title='Find-House', size=(370, 600))
     frm.Show()
     app.MainLoop()

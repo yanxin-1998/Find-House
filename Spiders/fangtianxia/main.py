@@ -12,9 +12,9 @@ class Ftx(object):
     def get_house_info(self,most_dict):
         most_dict2=most_dict.copy()  #建立副本储存变更后的条件
         if most_dict2['model'][:2] == '整租':   #由于整租和合租网页结构不同，所以分开
-            url=most_dict2['begin_url']
+            url=most_dict2['begin_url']+'.zu.fang.com'
         else:
-            url = most_dict2['begin_url']+'/hezu'
+            url = most_dict2['begin_url']+'.zu.fang.com/hezu'
             res = self.session.get(url)
             url=re.findall('href="(.*?)">点击跳转</a>', res.text)[0]
         res = self.session.get(url)
@@ -26,8 +26,13 @@ class Ftx(object):
         districts=page.xpath('//dl[@class="search-list clearfix"][1]/dd/a/text()')[1:] #关键词名字
         paths = page.xpath('//dl[@class="search-list clearfix"][1]/dd/a/@href')[1:]  #关键词路径
         for index, district in enumerate(districts):  # "/hezu-a0153/"
+            if district[-2:]=='其他': #不同网站有的叫周边，有的叫其他
+                city=page.xpath('//div[@class="guide rel"]/a[2]/text()')[0].replace('合租房', '').replace('租房', '')
+                kw_path_dict[city+'周边'] = paths[index].split('/')[1].split('-')[1]
+            # 不同网站有的地区后面带区字，有的不带，烦死了，干脆都做一份
             kw_path_dict[district] = paths[index].split('/')[1].split('-')[1]
-
+            kw_path_dict[district[:-1]]=paths[index].split('/')[1].split('-')[1]
+            kw_path_dict[district + '区']=paths[index].split('/')[1].split('-')[1]
 
         #价格
         prices = page.xpath('//dl[@id="rentid_D04_02"]/dd/a/text()')[1:]
@@ -96,11 +101,11 @@ class Ftx(object):
         # 'https://gz.zu.fang.com/house-a084/c2500-d21000-g23-p23-n31/'
         # 'https://hz.zu.fang.com/hezu-a0154/c2500-d21000-p23-n33-d52/'
         if most_dict2['model'][:2]=='整租':
-            url=most_dict2['begin_url']+'/house-'+kw_path_dict[most_dict2['district']]+'/'+kw_path_dict[most_dict2['price']]+'-'+kw_path_dict[most_dict2['type']]+'-'+kw_path_dict[most_dict2['direction']]+'-n31/'
+            url=most_dict2['begin_url']+'.zu.fang.com/house-'+kw_path_dict[most_dict2['district']]+'/'+kw_path_dict[most_dict2['price']]+'-'+kw_path_dict[most_dict2['type']]+'-'+kw_path_dict[most_dict2['direction']]+'-n31/'
             res = self.session.get(url)
             url = re.findall('href="(.*?)">点击跳转</a>', res.text)[0]
         else:
-            url=most_dict2['begin_url']+'/hezu-'+kw_path_dict[most_dict2['district']]+'/'+kw_path_dict[most_dict2['price']]+'-'+kw_path_dict[most_dict2['direction']]+'-'+kw_path_dict[most_dict2['model_type']]+'-'+kw_path_dict[most_dict2['type']]+'/'
+            url=most_dict2['begin_url']+'.zu.fang.com/hezu-'+kw_path_dict[most_dict2['district']]+'/'+kw_path_dict[most_dict2['price']]+'-'+kw_path_dict[most_dict2['direction']]+'-'+kw_path_dict[most_dict2['model_type']]+'-'+kw_path_dict[most_dict2['type']]+'/'
 
         res=self.session.get(url)
         page = etree.HTML(res.text)
@@ -110,7 +115,7 @@ class Ftx(object):
         info_list=[]
         for dl in all_dl:
             info_dict={}
-            link_url=most_dict2['begin_url']+dl.xpath('./dd/p[@class="title"]/a/@href')[0]
+            link_url=most_dict2['begin_url']+'.zu.fang.com'+dl.xpath('./dd/p[@class="title"]/a/@href')[0]
             img_url=dl.xpath('./dt/a/img/@onerror')[0].replace("imgiserror(this,'",'').replace("')",'')
             title = dl.xpath('./dd/p[@class="title"]/a/text()')[0]
             price=dl.xpath('./dd/div[@class="moreInfo"]')[0].xpath('string(.)').strip()

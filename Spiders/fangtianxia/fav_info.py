@@ -53,7 +53,6 @@ class Ftx_fav(object):
         models = []  # 出租方式
         directions = []  # 朝向
         districts = []  # 地区
-        urls=[]  #链接
 
         for info in info_list:
             prices.append(int(info['price'][:-3]))
@@ -62,7 +61,6 @@ class Ftx_fav(object):
             models.append(info['model'])
             directions.append(info['direction'])
             districts.append(info['district'])
-            urls.append(info['url'])
 
         most_dict={}
         sum_price,sum_area=0,0
@@ -75,16 +73,16 @@ class Ftx_fav(object):
         most_dict['model'] = Counter(models).most_common()[0][0]
         most_dict['direction'] = Counter(directions).most_common()[0][0]
         for i in info_list:
-            if i['district']==most_dict['district']:   #此处begin_url是为了判断是哪个地区的页面，房天下每个地区网页url都不同
-                most_dict['begin_url'] =i['url'].split('/')[0]+'//'+i['url'].split('/')[2]
+            if i['district']==most_dict['district']:   #此处begin_url是为了判断是哪个地区的页面
+                most_dict['begin_url'] =i['url'].split('/')[0]+'//'+i['url'].split('/')[2].split('.')[0]
                 break
         return most_dict
 
     def save_fav_info(self,info_list,dir_path=None):  #保存个人收藏信息为xlsx
         if dir_path:
-            file_path = os.path.join(dir_path,'./my_fav.xlsx')
+            file_path = os.path.join(dir_path,'./ftx_fav.xlsx')
         else:
-            file_path='./my_fav.xlsx'
+            file_path='./ftx_fav.xlsx'
         book = xlsxwriter.Workbook(file_path)
         sheet = book.add_worksheet()
         sheet.write(0, 0, '标题')
