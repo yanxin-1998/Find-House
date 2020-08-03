@@ -15,9 +15,9 @@ class Spider_58(object):
             url=most_dict2['begin_url']+'.58.com/zufang/'
         else:
             url = most_dict2['begin_url']+'.58.com/hezu/'
+
         res = self.session.get(url)
         page=etree.HTML(res.text)
-
         kw_path_dict={}   #生成一个关键词与路径的对照表，以下操作主要是添加关键词：路径，以及将most_dict2的信息转换成关键字，以便后续匹配路径，构造url
 
         # 地区
@@ -28,6 +28,7 @@ class Spider_58(object):
             kw_path_dict[district] = paths[index].split('/')[3]
             kw_path_dict[district[:-1]] = paths[index].split('/')[3]
             kw_path_dict[district+'区'] = paths[index].split('/')[3]
+
 
         # 价格
         prices = page.xpath('//dl[@id="secitem-rent"]/dd/a/text()')[1:]
@@ -53,7 +54,7 @@ class Spider_58(object):
         if most_dict2['model'][:2] == '整租':
             t = most_dict2['type'][0]
             if t=='1': most_dict2['type']='一室'
-            elif t == '2': most_dict2['type'] = '二室'
+            elif t == '2': most_dict2['type'] = '两室'
             elif t == '3': most_dict2['type'] = '三室'
             elif t == '4': most_dict2['type'] = '四室'
             else: most_dict2['type'] = '四室以上'
@@ -77,21 +78,14 @@ class Spider_58(object):
         if most_dict2['model'][:2]=='整租':
             url='https://zz.58.com/{}/zufang/{}{}{}/'\
                 .format(kw_path_dict[most_dict2['district']],kw_path_dict[most_dict2['price']],kw_path_dict[most_dict2['type']],kw_path_dict[most_dict2['direction']])
-
         else:
             url='https://zz.58.com/{}/hezu/{}{}{}/'\
                 .format(kw_path_dict[most_dict2['district']],kw_path_dict[most_dict2['price']],kw_path_dict[most_dict2['type']],kw_path_dict[most_dict2['direction']])
-        # print(url)
+
         res=self.session.get(url)
         page = etree.HTML(res.text)
 
         #处理字体反爬
-        font_text = re.findall(r"\@font-face\{font-family:'fangchan-secret';src:url\('data:application/font-ttf;charset=utf-8;base64,(.*?)'\) format\('truetype'\)",res.text)[0]
-        font_path=os.path.join(os.path.dirname(__file__) + '/58同城字体.ttf')
-        with open(font_path, 'wb')as f:
-            f.write(base64.b64decode(font_text.encode()))
-        font = TTFont(font_path)
-
         def transCharByFont(font: TTFont, string: str):
             dict = font.getBestCmap()
             final_string = ''
@@ -103,31 +97,41 @@ class Spider_58(object):
                 final_string += str(char)
             return final_string
 
-        # 匹配相应信息，返回信息列表
-        all_li=page.xpath('//ul[@class="house-list"]/li')[:-1]
-        info_list=[]
-        for li in all_li:
-            info_dict={}
-            link_url=li.xpath('./div/h2/a/@href')[0]
-            img_url=li.xpath('./div[@class="img-list"]/a/img/@lazy_src')[0].replace('"','')
-            title = li.xpath('./div/h2/a/text()')[0].strip()
-            price=li.xpath('./div[@class="list-li-right"]/div[@class="money"]')[0].xpath('string(.)').strip()
-            main_info=li.xpath('./div[@class="des"]/p[@class="room"]/text()')[0].strip().replace(' ','').replace('\xa0','')
-            location=li.xpath('./div[@class="des"]/p[@class="infor"]')[0].xpath('string(.)').replace(' ','').replace('\xa0','').replace('\n','')
+        try:
+            font_text = re.findall(r"\@font-face\{font-family:'fangchan-secret';src:url\('data:application/font-ttf;charset=utf-8;base64,(.*?)'\) format\('truetype'\)",res.text)[0]
+            font_path=os.path.join(os.path.dirname(__file__) + '/58同城字体.ttf')
+            with open(font_path, 'wb')as f:
+                f.write(base64.b64decode(font_text.encode()))
+            font = TTFont(font_path)
 
-            title = transCharByFont(font, title)
-            price = transCharByFont(font, price)
-            main_info = transCharByFont(font, main_info)
-            location = transCharByFont(font, location)
+            # 匹配相应信息，返回信息列表
+            all_li=page.xpath('//ul[@class="house-list"]/li')[:-1]
+            info_list=[]
+            for li in all_li:
+                info_dict={}
+                link_url=li.xpath('./div/h2/a/@href')[0]
+                img_url=li.xpath('./div[@class="img-list"]/a/img/@lazy_src')[0].replace('"','')
+                title = li.xpath('./div/h2/a/text()')[0].strip()
+                price=li.xpath('./div[@class="list-li-right"]/div[@class="money"]')[0].xpath('string(.)').strip()
+                main_info=li.xpath('./div[@class="des"]/p[@class="room"]/text()')[0].strip().replace(' ','').replace('\xa0','')
+                location=li.xpath('./div[@class="des"]/p[@class="infor"]')[0].xpath('string(.)').replace(' ','').replace('\xa0','').replace('\n','')
 
-            info_dict['link_url']=link_url
-            info_dict['img_url']=img_url
-            info_dict['title']=title
-            info_dict['price']=price
-            info_dict['main_info']=main_info
-            info_dict['location']=location
-            info_list.append(info_dict)
-        return info_list
+                title = transCharByFont(font, title)
+                price = transCharByFont(font, price)
+                main_info = transCharByFont(font, main_info)
+                location = transCharByFont(font, location)
+
+                info_dict['link_url']=link_url
+                info_dict['img_url']=img_url
+                info_dict['title']=title
+                info_dict['price']=price
+                info_dict['main_info']=main_info
+                info_dict['location']=location
+                info_list.append(info_dict)
+            return info_list
+        except:
+            print('58同城需要验证，或ip被封 链接 {}'.format(url))
+            return []
 
 if __name__ == '__main__':
     most_dict = {'price': '1516元/月', 'type': '1室1厅', 'district': '经开', 'model': '整租', 'area': '48平米',

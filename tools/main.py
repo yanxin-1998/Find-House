@@ -28,13 +28,8 @@ class Spider_all(object):
     def crawl_all(self,most_dict):
         a=Ftx()
         ftx=a.get_house_info(most_dict)
-
-        try:
-            b=Spider_58()
-            c58=b.get_house_info(most_dict)
-        except:
-            c58=[]
-            print('58同城需要验证，或ip被封')
+        b=Spider_58()
+        c58=b.get_house_info(most_dict)
 
         all_info=[]
         all_info.extend(ftx)
@@ -58,6 +53,7 @@ class Spider_all(object):
     def save_json(self,info:list):
         with open(DATA_DIR+'/Housing-Resource.json','w',encoding='utf-8') as f:
             json.dump(info,fp=f)
+            print('json储存完毕')
 
 
 class Button:
@@ -107,18 +103,18 @@ class FangtianxiaButton(Button):
                 #抓取使用者房天下网站收藏的租房信息
                 a=Ftx_fav(cookie_str)
                 fav_info=a.get_fav_info()
-                # a.save_fav_info(fav_info,os.path.join(BASE_PATH,'./Spiders/fangtianxia'))
+                a.save_fav_info(fav_info,os.path.join(BASE_PATH,'./Spiders/fangtianxia'))
                 #判断使用者的收藏中是否有租房信息
                 if len(fav_info)>0:
                     # 分析数据，找出最符合使用者的租房条件
                     most_dict=a.gen_most_dict(fav_info)
-                    print(most_dict)
+                    # print(most_dict)
                     #根据租房条件抓取各大租房网站的房源信息
                     b=Spider_all()
                     info=b.crawl_all(most_dict)
                     #生成HTML页面
                     b.gen_html(info)
-                    # b.save_json(info)
+                    b.save_json(info)
                     self.Automation(os.path.join(DATA_DIR, './Housing-Resource.html'))
                     self.updateStatus(self.frame, 2)
                 else:
@@ -148,16 +144,16 @@ class City58Button(Button):
                     # 抓取使用者58同城网站收藏的租房信息
                     a = C58_fav()
                     fav_info = a.get_fav_info(url_ls)
-                    # a.save_fav_info(fav_info,os.path.join(BASE_PATH,'./Spiders/city58'))
+                    a.save_fav_info(fav_info,os.path.join(BASE_PATH,'./Spiders/city58'))
                     # 分析数据，找出最符合使用者的租房条件
                     most_dict=a.gen_most_dict(fav_info)
-                    print(most_dict)
+                    # print(most_dict)
                     #根据租房条件抓取各大租房网站的房源信息
                     b=Spider_all()
                     info=b.crawl_all(most_dict)
                     #生成HTML页面
                     b.gen_html(info)
-                    # b.save_json(info)
+                    b.save_json(info)
                     self.Automation(os.path.join(DATA_DIR, './Housing-Resource.html'))
                     self.updateStatus(self.frame, 2)
                 else:

@@ -23,11 +23,13 @@ class C58_fav(object):
 
     def get_fav_info(self,url_ls):
         all_info_list = []
-        try:
-            for url in url_ls:
-                res=requests.get(url,headers=self.headers)
+        for url in url_ls:
+            try:
+                res = requests.get(url, headers=self.headers)
                 # 下载字体文件
-                font_text = re.findall(r"\@font-face\{font-family:'fangchan-secret';src:url\('data:application/font-ttf;charset=utf-8;base64,(.*?)'\) format\('truetype'\)",res.text)[0]
+                font_text = re.findall(
+                    r"\@font-face\{font-family:'fangchan-secret';src:url\('data:application/font-ttf;charset=utf-8;base64,(.*?)'\) format\('truetype'\)",
+                    res.text)[0]
                 font_path = os.path.join(os.path.dirname(__file__) + '/58同城字体.ttf')
                 with open(font_path, 'wb')as f:
                     f.write(base64.b64decode(font_text.encode()))
@@ -35,19 +37,21 @@ class C58_fav(object):
 
                 page = etree.HTML(res.text)
                 info_dict = {}
-                info=page.xpath('//ul[@class="f14"]/li/span[2]/text()')
+                info = page.xpath('//ul[@class="f14"]/li/span[2]/text()')
 
                 info_dict['title'] = page.xpath('//h1/text()')[0]  # 标题
                 info_dict['model'] = info[0]  # 出租方式
-                info_dict['price'] = self.transCharByFont(font,page.xpath('//b[@class="f36 strongbox"]/text()')[0])+'元/月'  # 租金
-                info_dict['type'] =self.transCharByFont(font,info[1].split('\xa0\xa0')[0])  # 户型
-                info_dict['area'] =self.transCharByFont(font,info[1].split('\xa0\xa0')[1].split(' ')[0]) + '平米'  # 面积
-                info_dict['direction'] =self.transCharByFont(font,info[2].split('\xa0\xa0')[0])+'向'  # 朝向
-                info_dict['district'] =page.xpath('//ul[@class="f14"]/li/span[2]')[4].xpath('./a[1]/text()')[0]  # 区域
+                info_dict['price'] = self.transCharByFont(font, page.xpath('//b[@class="f36 strongbox"]/text()')[
+                    0]) + '元/月'  # 租金
+                info_dict['type'] = self.transCharByFont(font, info[1].split('\xa0\xa0')[0])  # 户型
+                info_dict['area'] = self.transCharByFont(font, info[1].split('\xa0\xa0')[1].split(' ')[0]) + '平米'  # 面积
+                info_dict['direction'] = self.transCharByFont(font, info[2].split('\xa0\xa0')[0]) + '向'  # 朝向
+                info_dict['district'] = page.xpath('//ul[@class="f14"]/li/span[2]')[4].xpath('./a[1]/text()')[0]  # 区域
                 info_dict['url'] = url  # 链接
                 all_info_list.append(info_dict)
-        except:
-            print('58同城需要验证或ip被封')
+            except:
+                print('该房源已被移除或需要验证 链接 {}'.format(url))
+
 
         return all_info_list
 
@@ -109,3 +113,4 @@ class C58_fav(object):
             sheet.write(index + 1, 5, info['direction'])
             sheet.write(index + 1, 6, info['district'])
             sheet.write(index + 1, 7, info['url'])
+        print('58同城收藏信息储存完毕')
