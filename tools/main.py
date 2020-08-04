@@ -88,11 +88,11 @@ class FangtianxiaButton(Button):
     def OnClick(self, event):
         try:
             self.updateStatus(self.frame,0)
-            url='https://passport.fang.com/?backurl=https%3A%2F%2Fwww.fang.com%2F'
+            url='https://passport.fang.com'
             self.Automation(url)
             while 1:
                 time.sleep(0.2)
-                if self.driver.current_url[:16]!='https://passport':
+                if self.driver.current_url.startswith('https://my.fang.com'):
                     get_cookies = self.driver.get_cookies()
                     cookie_str = ''
                     for s in get_cookies:
